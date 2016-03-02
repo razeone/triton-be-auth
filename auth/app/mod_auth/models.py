@@ -28,7 +28,5 @@ class Profile(Base):
 
     __tablename__ = 'profile'
 
-
-
     user = db.Column(db.Integer, db.ForeignKey("user.id"))
 

@@ -10,7 +10,9 @@ from app import app
 from app import db
 from app.mod_auth.models import User
 
+
 def create_token(user):
+
     payload = {
         "sub": user.id,
         "iat": datetime.datetime.utcnow(),
@@ -20,26 +22,37 @@ def create_token(user):
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
     return token.decode('unicode_escape')
 
+
 def parse_token(req):
+
     token = req.headers.get('Authorization').split()[1]
     return jwt.decode(token, SECRET_KEY, algorithms='HS256')
 
+
 def login_required(f):
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
+
         if not request.headers.get('Authorization'):
-            response = jsonify(message='Missing authorization header')
+
+            response = jsonify(success=False, error="token is required")
             response.status_code = 401
             return response
 
         try:
+
             payload = parse_token(request)
+
         except DecodeError:
-            response = jsonify(message='Token is invalid')
+
+            response = jsonify(success=False, error="token is invalid")
             response.status_code = 401
             return response
+
         except ExpiredSignature:
-            response = jsonify(message='Token has expired')
+
+            response = jsonify(success=False, error="token has expired")
             response.status_code = 401
             return response
 
@@ -61,39 +74,41 @@ def signup():
 
     else:
 
-        mail = request.form["mail"]
-        password = request.form["password"]
+        try:
 
-        if len(mail) > 0 and len(password) > 0:
+            params = request.json
+            username = params["username"]
+            password = params["password"]
+
+        except Exception as e:
+            print(e)
+            response = jsonify(success=False, error="params not available")
+            return response
+
+
+        if len(username) > 0 and len(password) > 0:
 
             password = generate_password_hash(password)
 
             try:
-                user = User(mail, password)
+
+                user = User(username, password)
                 db.session.add(user)
                 db.session.commit()
 
                 response = {"success": True}
                 response["id"] = user.id
                 response["token"] = create_token(user)
-
                 return json.dumps(response)
 
-            except Exception as e: # exc.SQLAlchemyError:
-
+            except Exception as e:
                 print(e)
-
-                response = {"success": False}
-                response["error"] = "user already exists"
-
-                return json.dumps(response)
+                response = jsonify(success=False, error="user already exists")
+                return response
         
         else:
-
-            response = {"success": False}
-            response["error"] = "mail and password required"
-
-            return json.dumps(response)
+            response = jsonify(success=False, error="params not available")
+            return response
 
 
 @auth_module.route("/login", methods=["GET", "POST"])
@@ -104,43 +119,42 @@ def login():
 
     else:
 
-        mail = request.form["mail"]
-        password = request.form["password"]
+        try:
 
-        if len(mail) > 0 and len(password) > 0:
+            params = request.json
+            username = params["username"]
+            password = params["password"]
 
-            user = User.query.filter_by(mail=mail).first()
+        except Exception as e:
+            print(e)
+            response = jsonify(success=False, error="params not available")
+            return response
 
-            if user is None:
 
-                response = {"success": False}
-                response["error"] = "user not found"
+        if len(username) > 0 and len(password) > 0:
 
-                return json.dumps(response)
+            user = User.query.filter_by(mail=username).first()
 
-            else:
+            if user is not None:
 
                 if check_password_hash(user.password, password):
 
                     response = {"success": True}
                     response["id"] = user.id
                     response["token"] = create_token(user)
-
                     return json.dumps(response)
 
                 else:
+                    response = jsonify(success=False, error="wrong password")
+                    return response
 
-                    response = {"success": False}
-                    response["error"] = "wrong password"
-
-                    return json.dumps(response)
+            else:
+                response = jsonify(success=False, error="user not found")
+                return response
 
         else:
-
-            response = {"success": False}
-            response["error"] = "mail and password required"
-
-            return json.dumps(response)
+            response = jsonify(success=False, error="params not available")
+            return response
 
 
 @auth_module.route("/test", methods=["GET"])
