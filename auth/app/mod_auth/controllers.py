@@ -1,12 +1,24 @@
-from flask import Blueprint, request, jsonify, render_template, g
-from werkzeug.security import generate_password_hash, check_password_hash
-from jwt import DecodeError, ExpiredSignature
-from functools import wraps
-from datetime import datetime, timedelta
-from config import SECRET_KEY
-import jwt, json, datetime
+from flask import Blueprint
+from flask import request
+from flask import jsonify
+from flask import render_template
+from flask import g
 
-from app import app
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
+
+from jwt import DecodeError
+from jwt import ExpiredSignature
+
+from functools import wraps
+from datetime import datetime
+from datetime import timedelta
+from config import SECRET_KEY
+from config import ENCRYPTION_ALGORITHM
+
+import jwt
+import json
+
 from app import db
 from app.mod_auth.models import User
 
@@ -15,18 +27,18 @@ def create_token(user):
 
     payload = {
         "sub": user.id,
-        "iat": datetime.datetime.utcnow(),
-        "exp": datetime.datetime.utcnow() + timedelta(days=1)
+        "iat": datetime.utcnow(),
+        "exp": datetime.utcnow() + timedelta(days=1)
     }
 
-    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ENCRYPTION_ALGORITHM)
     return token.decode('unicode_escape')
 
 
 def parse_token(req):
 
     token = req.headers.get('Authorization').split()[1]
-    return jwt.decode(token, SECRET_KEY, algorithms='HS256')
+    return jwt.decode(token, SECRET_KEY, algorithms=ENCRYPTION_ALGORITHM)
 
 
 def login_required(f):
@@ -63,8 +75,8 @@ def login_required(f):
     return decorated_function
 
 
-
 auth_module = Blueprint("auth", __name__, url_prefix="/auth")
+
 
 @auth_module.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -85,7 +97,6 @@ def signup():
             response = jsonify(success=False, error="params not available")
             return response
 
-
         if len(username) > 0 and len(password) > 0:
 
             password = generate_password_hash(password)
@@ -105,7 +116,7 @@ def signup():
                 print(e)
                 response = jsonify(success=False, error="user already exists")
                 return response
-        
+
         else:
             response = jsonify(success=False, error="params not available")
             return response
@@ -129,7 +140,6 @@ def login():
             print(e)
             response = jsonify(success=False, error="params not available")
             return response
-
 
         if len(username) > 0 and len(password) > 0:
 
@@ -162,4 +172,3 @@ def login():
 def authtest():
 
     return '%d' % g.user_id
-
