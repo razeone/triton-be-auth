@@ -1,174 +1,97 @@
 from flask import Blueprint
 from flask import request
-from flask import jsonify
-from flask import render_template
 from flask import g
 
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 
-from jwt import DecodeError
-from jwt import ExpiredSignature
-
-from functools import wraps
-from datetime import datetime
-from datetime import timedelta
-from config import SECRET_KEY
-from config import ENCRYPTION_ALGORITHM
-
-import jwt
 import json
 
 from app import db
 from app.mod_auth.models import User
 
-
-def create_token(user):
-
-    payload = {
-        "sub": user.id,
-        "iat": datetime.utcnow(),
-        "exp": datetime.utcnow() + timedelta(days=1)
-    }
-
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ENCRYPTION_ALGORITHM)
-    return token.decode('unicode_escape')
-
-
-def parse_token(req):
-
-    token = req.headers.get('Authorization').split()[1]
-    return jwt.decode(token, SECRET_KEY, algorithms=ENCRYPTION_ALGORITHM)
-
-
-def login_required(f):
-
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-
-        if not request.headers.get('Authorization'):
-
-            response = jsonify(success=False, error="token is required")
-            response.status_code = 401
-            return response
-
-        try:
-
-            payload = parse_token(request)
-
-        except DecodeError:
-
-            response = jsonify(success=False, error="token is invalid")
-            response.status_code = 401
-            return response
-
-        except ExpiredSignature:
-
-            response = jsonify(success=False, error="token has expired")
-            response.status_code = 401
-            return response
-
-        g.user_id = payload['sub']
-
-        return f(*args, **kwargs)
-
-    return decorated_function
+from app.mod_base.errors import error_response
+from app.mod_auth.helpers import create_token
+from app.mod_auth.helpers import login_required
 
 
 auth_module = Blueprint("auth", __name__, url_prefix="/auth")
 
-
-@auth_module.route("/signup", methods=["GET", "POST"])
+@auth_module.route("/signup", methods=["POST"])
 def signup():
 
-    if request.method == "GET":
-        return render_template("signup.html")
+    try:
 
-    else:
+        params = request.json
+        username = params["username"]
+        password = params["password"]
+
+        if len(username) == 0 or len(password) == 0:
+            return error_response("params_required")
+
+    except Exception as e:
+        return error_response("params_required")
+
+    user = User.query.filter_by(mail=username).first()
+
+    if user is None:
 
         try:
-
-            params = request.json
-            username = params["username"]
-            password = params["password"]
-
-        except Exception as e:
-            print(e)
-            response = jsonify(success=False, error="params not available")
-            return response
-
-        if len(username) > 0 and len(password) > 0:
 
             password = generate_password_hash(password)
 
-            try:
+            user = User(username, password)
+            db.session.add(user)
+            db.session.commit()
 
-                user = User(username, password)
-                db.session.add(user)
-                db.session.commit()
-
-                response = {"success": True}
-                response["id"] = user.id
-                response["token"] = create_token(user)
-                return json.dumps(response)
-
-            except Exception as e:
-                print(e)
-                response = jsonify(success=False, error="user already exists")
-                return response
-
-        else:
-            response = jsonify(success=False, error="params not available")
-            return response
-
-
-@auth_module.route("/login", methods=["GET", "POST"])
-def login():
-
-    if request.method == "GET":
-        return render_template("login.html")
-
-    else:
-
-        try:
-
-            params = request.json
-            username = params["username"]
-            password = params["password"]
+            response = {"success": True}
+            response["id"] = user.id
+            response["token"] = create_token(user)
+            return json.dumps(response)
 
         except Exception as e:
-            print(e)
-            response = jsonify(success=False, error="params not available")
-            return response
+            return error_response("user_not_created")
 
-        if len(username) > 0 and len(password) > 0:
+    else:
+        return error_response("user_already_exists")
 
-            user = User.query.filter_by(mail=username).first()
 
-            if user is not None:
+@auth_module.route("/login", methods=["POST"])
+def login():
 
-                if check_password_hash(user.password, password):
+    try:
 
-                    response = {"success": True}
-                    response["id"] = user.id
-                    response["token"] = create_token(user)
-                    return json.dumps(response)
+        params = request.json
+        username = params["username"]
+        password = params["password"]
 
-                else:
-                    response = jsonify(success=False, error="wrong password")
-                    return response
+        if len(username) == 0 or len(password) == 0:
+            return error_response("params_required")
 
-            else:
-                response = jsonify(success=False, error="user not found")
-                return response
+    except Exception as e:
+        return error_response("params_required")
+
+    user = User.query.filter_by(mail=username).first()
+
+    if user is not None:
+
+        if check_password_hash(user.password, password):
+
+            response = {"success": True}
+            response["id"] = user.id
+            response["token"] = create_token(user)
+            return json.dumps(response)
 
         else:
-            response = jsonify(success=False, error="params not available")
-            return response
+            return error_response("wrong_password")
+
+    else:
+        return error_response("user_not_found")
 
 
 @auth_module.route("/test", methods=["GET"])
 @login_required
 def authtest():
 
-    return '%d' % g.user_id
+    return '%s' % g.user.mail
+
