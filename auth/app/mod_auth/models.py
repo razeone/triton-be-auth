@@ -15,10 +15,3 @@ class User(Base):
         self.password = password
         #self.active = False
 
-
-class Profile(Base):
-
-    __tablename__ = 'profile'
-
-    user = db.Column(db.Integer, db.ForeignKey("user.id"))
-

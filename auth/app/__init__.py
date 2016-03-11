@@ -11,8 +11,9 @@ set_cors(app)
 set_errors(app)
 
 db = SQLAlchemy(app)
-db.create_all()
 
 from app.mod_auth.controllers import auth_module
 app.register_blueprint(auth_module)
+
+db.create_all()
 
