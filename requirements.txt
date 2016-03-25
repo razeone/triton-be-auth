@@ -3,4 +3,4 @@ flask-script
 flask-sqlalchemy
 flask-login
 pyjwt
-
+sqlalchemy_utils

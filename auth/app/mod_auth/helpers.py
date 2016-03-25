@@ -21,7 +21,7 @@ from app.mod_base.errors import error_response
 def create_token(user):
 
     payload = {
-        "sub": user.id,
+        "sub": user.email,
         "iat": datetime.utcnow(),
         "exp": datetime.utcnow() + timedelta(days=1)
     }
@@ -48,8 +48,8 @@ def login_required(f):
 
             payload = parse_token(request)
 
-            user_id = payload['sub']
-            user = User.query.filter_by(id=user_id).first()
+            email = payload['sub']
+            user = User.query.filter_by(id=email).first()
 
             if user is None:
                 return error_response("user_not_found")
@@ -65,4 +65,3 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
-
