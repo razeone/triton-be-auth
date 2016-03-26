@@ -112,7 +112,6 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect('/')
 
 
 @auth_module.route("/test", methods=["GET"])
