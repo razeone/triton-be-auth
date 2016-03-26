@@ -5,7 +5,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 HOST = "0.0.0.0"
 PORT = 8085
-DEBUG = False
+DEBUG = True
 
 POSTGRES_USER = os.environ.get('POSTGRES_USER', 'postgres')
 POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'secret')
