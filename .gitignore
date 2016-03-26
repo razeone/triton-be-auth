@@ -65,4 +65,4 @@ target/
 auth/data/*
 *.db
 
-
+environ.rc
