@@ -1,6 +1,5 @@
 from app.mod_auth.models import User
 from werkzeug.security import generate_password_hash
-from app.mod_auth.helpers import create_token
 from app.mod_auth.utils import gen_random_uuid
 
 from app import db

@@ -19,6 +19,7 @@ from app.mod_auth.models import User
 from app.mod_base.errors import error_response
 
 from app.mod_auth.helpers import login_required
+from app.mod_auth.helpers import create_token
 from app.mod_auth.utils import gen_random_uuid
 
 from app.mod_auth.user import get_user_by_email
@@ -90,7 +91,7 @@ def login():
             response = {"success": True}
             response["email"] = user.email
             response["token"] = create_token(user)
-            return json.dumps(response)
+            return jsonify(response)
 
         else:
             return error_response("wrong_password")
