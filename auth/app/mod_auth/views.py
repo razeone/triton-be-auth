@@ -18,14 +18,12 @@ from app.mod_auth.models import User
 
 from app.mod_base.errors import error_response
 
-from app.mod_auth.helpers import login_required
-from app.mod_auth.helpers import create_token
+from app.mod_auth.utils import login_required
+from app.mod_auth.utils import create_token
 from app.mod_auth.utils import gen_random_uuid
 
 from app.mod_auth.user import get_user_by_email
 from app.mod_auth.user import create_user
-
-import json
 
 
 auth_module = Blueprint("auth", __name__, url_prefix="/auth")
@@ -42,6 +40,7 @@ def user_loader(id):
 
 @auth_module.route("/signup/", methods=["POST"])
 def signup():
+    print(request.json)
     try:
         params = request.json
         email = params["email"]
@@ -80,6 +79,7 @@ def login():
             return error_response("params_required")
 
     except Exception as e:
+        print(e)
         return error_response("params_required")
 
     user = get_user_by_email(email)
@@ -100,10 +100,14 @@ def login():
         return error_response("user_not_found")
 
 
-@app.route("/logout")
+@auth_module.route("/logout")
 @login_required
 def logout():
-    logout_user()
+    try:
+        logout_user()
+    except Exception as e:
+        print(e)
+        return error_response(e)
 
 
 @auth_module.route("/test", methods=["GET"])

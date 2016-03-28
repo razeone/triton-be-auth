@@ -5,3 +5,4 @@ flask-login
 pyjwt
 sqlalchemy_utils
 psycopg2
+marshmallow

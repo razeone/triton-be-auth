@@ -6,6 +6,7 @@
 virtualenv -p python3.5 env 
 source env/bin/activate 
 pip install -r requirements.txt
+export APP_CONFIG="config.DevelopmentConfig"
 python run.py
 ```
 
@@ -17,12 +18,6 @@ python run.py
 
 ### Production
 
-For production you need to add the following environment variables for a PostgreSQL database:
-
-
 ```
-ENVIRONMENT=production
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=secret
-POSTGRES_DATABASE_NAME=triton_auth
+export APP_CONFIG="config.ProductionConfig"
 ```

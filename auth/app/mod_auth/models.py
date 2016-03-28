@@ -17,3 +17,6 @@ class User(UserMixin, db.Model):
         self.id = id
         self.email = email
         self.password = password
+
+    def __repr__(self):
+        return '<User(email={self.email!r})'.format(self=self)
