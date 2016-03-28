@@ -1,4 +1,5 @@
 from app import app
+
 from flask import Blueprint
 from flask import request
 from flask import g
@@ -10,9 +11,7 @@ from flask.ext.login import login_user
 from flask.ext.login import logout_user
 from flask.ext.login import current_user
 
-
 from werkzeug.security import check_password_hash
-
 
 from app.mod_auth.models import User
 
@@ -120,10 +119,10 @@ def users():
         return error_response("user_not_found")
 
 
-@auth_module.route("/users/<pk>")
-def get_user_dettail(pk):
+@auth_module.route("/users/<user_id>")
+def get_user_dettail(user_id):
     try:
-        response = get_user(pk)
+        response = get_user(user_id)
         return jsonify({"user": response.data})
     except Exception as e:
         return error_response("user_not_found")
