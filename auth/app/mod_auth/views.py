@@ -116,16 +116,21 @@ def users():
         response = get_users()
         return jsonify({"users": response.data})
     except Exception as e:
-        return error_response("user_not_found")
+        return error_response("404")
 
 
 @auth_module.route("/users/<user_id>")
 def get_user_dettail(user_id):
     try:
         response = get_user(user_id)
-        return jsonify({"user": response.data})
     except Exception as e:
-        return error_response("user_not_found")
+        print(str(e))
+        return "Internal server error", 500
+    if response[0]:
+        return jsonify(response[1].data)
+    else:
+        return jsonify(response[1]), 404
+
 
 
 @auth_module.route("/test", methods=["GET"])

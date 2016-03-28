@@ -7,25 +7,31 @@ from app import db
 
 
 def create_user(email, password):
-    password = generate_password_hash(password)
-    id = gen_random_uuid()
+    try:
+        password = generate_password_hash(password)
+        id = gen_random_uuid()
 
-    user = User(id=id, email=email, password=password)
+        user = User(id=id, email=email, password=password)
 
-    db.session.add(user)
-    db.session.commit()
+        db.session.add(user)
+        db.session.commit()
 
-    response = {"success": True}
-    response["id"] = user.id
-    response["email"] = user.email
-    return response
+        response = {"success": True}
+        response["id"] = user.id
+        response["email"] = user.email
+        return response
+    except Exception as e:
+        return False, {"error": "Error creating user " + str(e)}
 
 
 def get_user(id):
-    user_instance = User.query.get(id)
-    user_schema = UserSchema()
-    result = user_schema.dump(user_instance)
-    return result
+    try:
+        user_instance = User.query.get(id)
+        user_schema = UserSchema()
+        result = user_schema.dump(user_instance)
+        return True, result
+    except Exception as e:
+        return False, {"error": "User not found " + str(e)}
 
 
 def get_user_by_email(email):
