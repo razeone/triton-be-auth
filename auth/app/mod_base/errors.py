@@ -26,4 +26,3 @@ def error_response(error):
     response["errorCode"] = errors[error]["errorCode"]
 
     return json.dumps(response)
-
