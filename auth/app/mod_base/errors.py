@@ -2,6 +2,7 @@ import json
 
 
 errors = {}
+errors[401] = {"error": "unauthorized", "errorCode": 401}
 errors[403] = {"error": "endpoint forbidden", "errorCode": 403}
 errors[404] = {"error": "endpoint not found", "errorCode": 404}
 errors[405] = {"error": "method not allowed", "errorCode": 405}
@@ -25,3 +26,4 @@ def error_response(error):
     response["errorCode"] = errors[error]["errorCode"]
 
     return json.dumps(response)
+
