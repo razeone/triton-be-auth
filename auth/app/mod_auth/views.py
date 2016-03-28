@@ -24,6 +24,8 @@ from app.mod_auth.utils import gen_random_uuid
 
 from app.mod_auth.user import get_user_by_email
 from app.mod_auth.user import create_user
+from app.mod_auth.user import get_users
+from app.mod_auth.user import get_user
 
 
 auth_module = Blueprint("auth", __name__, url_prefix="/auth")
@@ -79,7 +81,6 @@ def login():
             return error_response("params_required")
 
     except Exception as e:
-        print(e)
         return error_response("params_required")
 
     user = get_user_by_email(email)
@@ -110,9 +111,26 @@ def logout():
         return error_response(e)
 
 
+@auth_module.route("/users/", methods=["GET"])
+def users():
+    try:
+        response = get_users()
+        return jsonify({"users": response.data})
+    except Exception as e:
+        return error_response("user_not_found")
+
+
+@auth_module.route("/users/<pk>")
+def get_user_dettail(pk):
+    try:
+        response = get_user(pk)
+        return jsonify({"user": response.data})
+    except Exception as e:
+        return error_response("user_not_found")
+
+
 @auth_module.route("/test", methods=["GET"])
 @login_required
 def authtest():
 
     return '%s' % g.user.email
-
