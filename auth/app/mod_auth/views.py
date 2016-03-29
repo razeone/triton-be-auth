@@ -124,7 +124,6 @@ def get_user_dettail(user_id):
     try:
         response = get_user(user_id)
     except Exception as e:
-        print(str(e))
         return "Internal server error", 500
     if response[0]:
         return jsonify(response[1].data)

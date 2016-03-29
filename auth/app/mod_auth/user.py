@@ -31,7 +31,7 @@ def get_user(id):
         result = user_schema.dump(user_instance)
         return True, result
     except Exception as e:
-        return False, {"error": "User not found " + str(e)}
+        return False, {"error": "User not found"}
 
 
 def get_user_by_email(email):
