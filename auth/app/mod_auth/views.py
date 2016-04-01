@@ -27,7 +27,7 @@ from app.mod_auth.user import get_users
 from app.mod_auth.user import get_user
 
 
-auth_module = Blueprint("auth", __name__, url_prefix="/auth")
+auth_module = Blueprint("auth", __name__, url_prefix="/v1/auth")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -41,7 +41,6 @@ def user_loader(id):
 
 @auth_module.route("/signup/", methods=["POST"])
 def signup():
-    print(request.json)
     try:
         params = request.json
         email = params["email"]
@@ -60,7 +59,6 @@ def signup():
             return jsonify(response)
 
         except Exception as e:
-            print(e)
             return error_response("user_not_created")
 
     else:
@@ -69,7 +67,6 @@ def signup():
 
 @auth_module.route("/login/", methods=["POST"])
 def login():
-
     try:
 
         params = request.json
@@ -106,7 +103,6 @@ def logout():
     try:
         logout_user()
     except Exception as e:
-        print(e)
         return error_response(e)
 
 
