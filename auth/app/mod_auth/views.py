@@ -36,7 +36,7 @@ def user_loader(id):
     return user
 
 
-@auth_module.route("/login/", methods=["POST"])
+@auth_module.route("/login", methods=["POST"])
 def login():
     try:
 
@@ -82,7 +82,7 @@ def logout():
         return error_response(e)
 
 
-@auth_module.route("/users/", methods=["GET", "POST"])
+@auth_module.route("/users", methods=["GET", "POST"])
 def users():
     if request.method == "POST":
         try:
@@ -127,7 +127,11 @@ def get_user_dettail(user_id):
         return error_response("user_not_found")
 
 
-@auth_module.route("/test", methods=["GET"])
+@auth_module.route("/users/me", methods=["GET"])
 @login_required
 def authtest():
-    return '%s' % user_loader(current_user.email)
+    response = {
+        "id": current_user.id,
+        "email": current_user.email
+    }
+    return jsonify(response), 200

@@ -76,4 +76,3 @@ def login_required(f):
 
 def gen_random_uuid():
     return uuid.uuid4()
-
