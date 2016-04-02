@@ -5,7 +5,7 @@
 ```
 virtualenv -p python3.5 env 
 source env/bin/activate 
-pip install -r requirements.txt
+pip install -r requirements/development.txt
 export APP_SETTINGS="config.DevelopmentConfig"
 python run.py
 ```
@@ -19,5 +19,6 @@ python run.py
 ### Production
 
 ```
+pip install -r requirements/production.txt
 export APP_SETTINGS="config.ProductionConfig"
 ```
