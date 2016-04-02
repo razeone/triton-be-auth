@@ -2,8 +2,6 @@ from app import app
 
 from flask import Blueprint
 from flask import request
-from flask import g
-from flask import redirect
 from flask import jsonify
 
 from flask.ext.login import LoginManager
@@ -19,7 +17,6 @@ from app.mod_auth.models import User
 from app.mod_base.errors import error_response
 
 from app.mod_auth.utils import create_token
-from app.mod_auth.utils import gen_random_uuid
 
 from app.mod_auth.user import get_user_by_email
 from app.mod_auth.user import create_user
@@ -103,7 +100,7 @@ def users():
         if user is None:
             try:
                 response = create_user(email, password)
-                return jsonify(response)
+                return jsonify(response), 201
 
             except Exception as e:
                 return error_response("user_not_created")
@@ -115,7 +112,7 @@ def users():
             response = get_users()
             return jsonify({"users": response.data})
         except Exception as e:
-            return error_response("404")
+            return error_response("user_not_found")
 
 
 @auth_module.route("/users/<user_id>")
@@ -123,14 +120,14 @@ def get_user_dettail(user_id):
     try:
         response = get_user(user_id)
     except Exception as e:
-        return "Internal server error", 500
+        return error_response("user_not_found")
     if response[0]:
         return jsonify(response[1].data), 200
     else:
-        return jsonify(response[1]), 404
+        return error_response("user_not_found")
 
 
 @auth_module.route("/test", methods=["GET"])
 @login_required
 def authtest():
-    return '%s' % user_loader(current_user.id)
+    return '%s' % user_loader(current_user.email)
