@@ -15,9 +15,9 @@ class Config(object):
 
 
 class ProductionConfig(Config):
-    POSTGRES_USER = 'postgres'
-    POSTGRES_PASSWORD = 'secret'
-    POSTGRES_HOST = 'localhost'
+    POSTGRES_USER = os.getenv('POSTGRES_USER')
+    POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+    POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
     POSTGRES_DATABASE_NAME = 'triton_auth'
     SQLALCHEMY_DATABASE_URI = 'postgresql://%s:%s@%s/%s' % (
         POSTGRES_USER,
