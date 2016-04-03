@@ -39,31 +39,31 @@ def user_loader(id):
 @auth_module.route("/login", methods=["POST"])
 def login():
     try:
-
         params = request.json
-        email = params["email"]
-        password = params["password"]
-
-        if len(email) == 0 or len(password) == 0:
-            return error_response("params_required")
-
     except Exception as e:
+        return error_response("params_required")
+    if not 'email' in params:
+        return error_response("email_missing")
+    if not 'password' in params:
+        return error_response("password_missing")
+
+    email = params["email"]
+    password = params["password"]
+
+    if len(email) == 0 or len(password) == 0:
         return error_response("params_required")
 
     user = get_user_by_email(email)
 
     if user is not None:
-
         if check_password_hash(user.password, password):
             login_user(user)
             response = {"success": True}
             response["email"] = user.email
             response["token"] = create_token(user)
             return jsonify(response)
-
         else:
             return error_response("wrong_password")
-
     else:
         return error_response("user_not_found")
 
@@ -84,15 +84,20 @@ def logout():
 
 @auth_module.route("/users", methods=["GET", "POST"])
 def users():
+    "Create new user"
     if request.method == "POST":
         try:
             params = request.json
-            email = params["email"]
-            password = params["password"]
-            if len(email) == 0 or len(password) == 0:
-                return error_response("params_required")
-
         except Exception as e:
+            return error_response("params_required")
+        if not 'email' in params:
+            return error_response("email_missing")
+        if not 'password' in params:
+            return error_response("password_missing")
+
+        email = params["email"]
+        password = params["password"]
+        if len(email) == 0 or len(password) == 0:
             return error_response("params_required")
 
         user = get_user_by_email(email)
@@ -104,9 +109,9 @@ def users():
 
             except Exception as e:
                 return error_response("user_not_created")
-
         else:
             return error_response("user_already_exists")
+    "List all users"
     if request.method == "GET":
         try:
             response = get_users()
@@ -115,16 +120,19 @@ def users():
             return error_response("user_not_found")
 
 
-@auth_module.route("/users/<user_id>")
+@auth_module.route("/users/<user_id>", methods=["GET", "PATCH"])
 def get_user_dettail(user_id):
-    try:
-        response = get_user(user_id)
-    except Exception as e:
-        return error_response("user_not_found")
-    if response[0]:
-        return jsonify(response[1].data), 200
-    else:
-        return error_response("user_not_found")
+    if request.method == "GET":
+        try:
+            response = get_user(user_id)
+        except Exception as e:
+            return error_response("user_not_found")
+        if response[0]:
+            return jsonify(response[1].data), 200
+        else:
+            return error_response("user_not_found")
+    if request.method == "PATCH":
+        return "Patching user", 201
 
 
 @auth_module.route("/users/me", methods=["GET"])

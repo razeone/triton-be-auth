@@ -2,7 +2,11 @@ import json
 
 ERRORS = {}
 
-# API errors
+# General API errors
+ERRORS[400] = {
+    "error": "Bad request",
+    "error_code": 400
+}
 ERRORS[401] = {
     "error": "Unauthorized",
     "error_code": 401
@@ -53,6 +57,14 @@ ERRORS["user_already_exists"] = {
     "error": "User already exists",
     "error_code": 400
     }
+ERRORS["email_missing"] = {
+    "error": "Email address is missing",
+    "error_code": 422
+}
+ERRORS["password_missing"] = {
+    "error": "The password is missing",
+    "error_code": 422
+}
 ERRORS["user_not_created"] = {
     "error": "Error creating user",
     "error_code": 500
@@ -60,8 +72,6 @@ ERRORS["user_not_created"] = {
 
 
 def error_response(error):
-
     response = {"success": False}
     response["error"] = ERRORS[error]["error"]
-
     return json.dumps(response), ERRORS[error]["error_code"]
