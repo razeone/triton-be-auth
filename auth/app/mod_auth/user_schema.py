@@ -3,6 +3,10 @@ from marshmallow import fields
 
 
 class UserSchema(Schema):
-    id = fields.String()
+    user_id = fields.UUID()
     email = fields.Email(required=True)
-    created_at = fields.String()
+    is_active = fields.Boolean()
+    is_admin = fields.Boolean()
+    activation_token = fields.String()
+    created_at = fields.DateTime()
+    confirmated_at = fields.DateTime()

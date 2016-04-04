@@ -17,6 +17,7 @@ from app.mod_auth.models import User
 from app.mod_base.errors import error_response
 
 from app.mod_auth.utils import create_token
+from app.mod_auth.utils import jwt_required
 
 from app.mod_auth.user import get_user_by_email
 from app.mod_auth.user import create_user
@@ -31,8 +32,8 @@ login_manager.init_app(app)
 
 
 @login_manager.user_loader
-def user_loader(id):
-    user = User.query.get(id)
+def user_loader(user_id):
+    user = User.query.get(user_id)
     return user
 
 
@@ -68,8 +69,8 @@ def login():
         return error_response("user_not_found")
 
 
-@auth_module.route("/logout")
-@login_required
+@auth_module.route("/logout", methods=["POST"])
+@jwt_required
 def logout():
     try:
         logout_user()
@@ -84,34 +85,35 @@ def logout():
 
 @auth_module.route("/users", methods=["GET", "POST"])
 def users():
-    "Create new user"
+
     if request.method == "POST":
         try:
             params = request.json
         except Exception as e:
             return error_response("params_required")
+
         if not 'email' in params:
             return error_response("email_missing")
         if not 'password' in params:
             return error_response("password_missing")
-
-        email = params["email"]
-        password = params["password"]
-        if len(email) == 0 or len(password) == 0:
+        if len(params["email"]) == 0 or len(params["password"]) == 0:
             return error_response("params_required")
 
-        user = get_user_by_email(email)
+        user_data = {}
+        user_data["email"] = params["email"]
+        user_data["password"] = params["password"]
+
+        user = get_user_by_email(user_data["email"])
 
         if user is None:
             try:
-                response = create_user(email, password)
+                response = create_user(user_data)
                 return jsonify(response), 201
 
             except Exception as e:
                 return error_response("user_not_created")
         else:
             return error_response("user_already_exists")
-    "List all users"
     if request.method == "GET":
         try:
             response = get_users()
@@ -120,26 +122,24 @@ def users():
             return error_response("user_not_found")
 
 
-@auth_module.route("/users/<user_id>", methods=["GET", "PATCH"])
+@auth_module.route("/users/<user_id>", methods=["GET"])
+@login_required
 def get_user_dettail(user_id):
-    if request.method == "GET":
-        try:
-            response = get_user(user_id)
-        except Exception as e:
-            return error_response("user_not_found")
-        if response[0]:
-            return jsonify(response[1].data), 200
-        else:
-            return error_response("user_not_found")
-    if request.method == "PATCH":
-        return "Patching user", 201
+    try:
+        response = get_user(user_id)
+    except Exception as e:
+        return error_response("user_not_found")
+    if response[0]:
+        return jsonify(response[1].data), 200
+    else:
+        return error_response("user_not_found")
 
 
 @auth_module.route("/users/me", methods=["GET"])
 @login_required
 def authtest():
     response = {
-        "id": current_user.id,
+        "user_id": current_user.user_id,
         "email": current_user.email
     }
     return jsonify(response), 200

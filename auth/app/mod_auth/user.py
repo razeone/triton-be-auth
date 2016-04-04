@@ -1,32 +1,40 @@
+import random
+from app import db
+
 from app.mod_auth.models import User
 from werkzeug.security import generate_password_hash
 from app.mod_auth.utils import gen_random_uuid
 from app.mod_auth.user_schema import UserSchema
 
-from app import db
 
-
-def create_user(email, password):
+def create_user(user_data):
     try:
-        password = generate_password_hash(password)
-        id = gen_random_uuid()
+        password = generate_password_hash(user_data["password"])
+        user_id = gen_random_uuid()
+        activation_token = str(random.getrandbits(128))
 
-        user = User(id=id, email=email, password=password)
+        user = User(
+            user_id=user_id,
+            email=user_data["email"],
+            password=password,
+            activation_token=activation_token
+            )
 
         db.session.add(user)
         db.session.commit()
 
         response = {"success": True}
-        response["id"] = user.id
+        response["user_id"] = user.user_id
         response["email"] = user.email
         return response
     except Exception as e:
-        return False, {"error": "Error creating user " + str(e)}
+        print(e)
+        return False, {"error": "Error creating user"}
 
 
-def get_user(id):
+def get_user(user_id):
     try:
-        user_instance = User.query.get(id)
+        user_instance = User.query.get(user_id)
         user_schema = UserSchema()
         result = user_schema.dump(user_instance)
         return True, result
