@@ -1,29 +1,77 @@
 import json
 
+ERRORS = {}
 
-errors = {}
-errors[401] = {"error": "unauthorized", "errorCode": 401}
-errors[403] = {"error": "endpoint forbidden", "errorCode": 403}
-errors[404] = {"error": "endpoint not found", "errorCode": 404}
-errors[405] = {"error": "method not allowed", "errorCode": 405}
+# General API errors
+ERRORS[400] = {
+    "error": "Bad request",
+    "error_code": 400
+}
+ERRORS[401] = {
+    "error": "Unauthorized",
+    "error_code": 401
+    }
+ERRORS[403] = {
+    "error": "Endpoint forbidden",
+    "error_code": 403
+    }
+ERRORS[404] = {
+    "error": "Endpoint not found",
+    "error_code": 404
+    }
+ERRORS[405] = {
+    "error": "Method not allowed",
+    "error_code": 405
+    }
 
-errors["token_required"] = {"error": "token is required", "errorCode": 401}
-errors["token_invalid"] = {"error": "token is invalid", "errorCode": 401}
-errors["token_expired"] = {"error": "token has expired", "errorCode": 401}
+# Token specific errors
 
-errors["params_required"] = {"error": "params not available", "errorCode": 1011}
+ERRORS["token_required"] = {
+    "error": "Token is required",
+    "error_code": 401
+    }
+ERRORS["token_invalid"] = {
+    "error": "Token is invalid",
+    "error_code": 401
+    }
+ERRORS["token_expired"] = {
+    "error": "Token has expired",
+    "error_code": 401
+    }
 
-errors["user_not_found"] = {"error": "user not found", "errorCode": 1021}
-errors["wrong_password"] = {"error": "wrong password", "errorCode": 1022}
-errors["user_already_exists"] = {"error": "user already exists", "errorCode": 1023}
-errors["user_not_created"] = {"error": "error creating user", "errorCode": 1024}
+# User handling errors
+
+ERRORS["params_required"] = {
+    "error": "Params not available",
+    "error_code": 400
+    }
+ERRORS["user_not_found"] = {
+    "error": "User not found",
+    "error_code": 404
+    }
+ERRORS["wrong_password"] = {
+    "error": "Wrong password",
+    "error_code": 400
+    }
+ERRORS["user_already_exists"] = {
+    "error": "User already exists",
+    "error_code": 400
+    }
+ERRORS["email_missing"] = {
+    "error": "Email address is missing",
+    "error_code": 422
+}
+ERRORS["password_missing"] = {
+    "error": "The password is missing",
+    "error_code": 422
+}
+ERRORS["user_not_created"] = {
+    "error": "Error creating user",
+    "error_code": 500
+    }
 
 
 def error_response(error):
-
     response = {"success": False}
-    response["error"] = errors[error]["error"]
-    response["errorCode"] = errors[error]["errorCode"]
-
-    return json.dumps(response)
-
+    response["error"] = ERRORS[error]["error"]
+    return json.dumps(response), ERRORS[error]["error_code"]
