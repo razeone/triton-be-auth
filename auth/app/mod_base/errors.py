@@ -45,17 +45,18 @@ ERRORS["params_required"] = {
     "error": "Params not available",
     "error_code": 400
     }
-ERRORS["user_not_found"] = {
-    "error": "User not found",
-    "error_code": 404
-    }
+
 ERRORS["wrong_password"] = {
     "error": "Wrong password",
     "error_code": 400
     }
+ERRORS["user_not_found"] = {
+    "error": "User not found",
+    "error_code": 404
+    }
 ERRORS["user_already_exists"] = {
     "error": "User already exists",
-    "error_code": 400
+    "error_code": 409
     }
 ERRORS["email_missing"] = {
     "error": "Email address is missing",

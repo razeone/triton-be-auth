@@ -1,3 +1,6 @@
+import uuid
+import jwt
+
 from app import app
 from flask import request
 from flask import g
@@ -10,11 +13,9 @@ from datetime import datetime
 from datetime import timedelta
 
 from app.mod_auth.models import User
-
 from app.mod_base.errors import error_response
 
-import uuid
-import jwt
+
 
 
 def create_token(user):
@@ -43,7 +44,7 @@ def parse_token(req):
         )
 
 
-def login_required(f):
+def jwt_required(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -56,7 +57,7 @@ def login_required(f):
             payload = parse_token(request)
 
             email = payload['sub']
-            user = User.query.filter_by(id=email).first()
+            user = User.query.filter_by(email=email).first()
 
             if user is None:
                 return error_response("user_not_found")
