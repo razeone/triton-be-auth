@@ -1,7 +1,10 @@
-flask
-flask-script
-flask-sqlalchemy
-flask-login
-pyjwt
-sqlalchemy_utils
-marshmallow
+Flask==0.10.1
+Flask-Login==0.3.2
+Flask-Script==2.0.5
+Flask-SQLAlchemy==2.1
+itsdangerous==0.24
+Jinja2==2.8
+MarkupSafe==0.23
+marshmallow==2.6.1
+PyJWT==1.4.0
+six==1.10.0
