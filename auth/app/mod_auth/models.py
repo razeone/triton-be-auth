@@ -10,6 +10,8 @@ class User(UserMixin, db.Model):
 
     id = db.Column(UUIDType, unique=True, primary_key=True)
     email = db.Column(db.String(128), unique=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     password = db.Column(db.String(192), nullable=False)
 
