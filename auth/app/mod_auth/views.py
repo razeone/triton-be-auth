@@ -23,6 +23,7 @@ from app.mod_auth.user import get_user_by_email
 from app.mod_auth.user import create_user
 from app.mod_auth.user import get_users
 from app.mod_auth.user import get_user
+from app.mod_auth.user import activate_user
 
 
 auth_module = Blueprint("auth", __name__, url_prefix="/v1/auth")
@@ -81,6 +82,17 @@ def logout():
         return jsonify(response), 200
     except Exception as e:
         return error_response(e)
+
+
+@auth_module.route("/activate/<activate_token>", methods=["GET"])
+def activate(activate_token):
+    try:
+        activate_user(activate_token)
+
+        return jsonify({}), 200
+    except Exception as e:
+        return error_response(e)
+
 
 
 @auth_module.route("/users", methods=["GET", "POST"])

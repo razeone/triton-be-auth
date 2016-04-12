@@ -1,5 +1,6 @@
 import uuid
 import jwt
+import sendgrid
 
 from app import app
 from flask import request
@@ -17,6 +18,7 @@ from app.mod_base.errors import error_response
 
 
 
+mailClient = sendgrid.SendGridClient(app.config['MAIL_KEY'])
 
 def create_token(user):
 
@@ -77,3 +79,15 @@ def jwt_required(f):
 
 def gen_random_uuid():
     return uuid.uuid4()
+
+
+def send_activate_mail(user):
+    url = "http://localhost:8085/v1/auth/activate/" + user.activation_token
+
+    mail = sendgrid.Mail()
+    mail.add_to(user.email)
+    mail.set_from("root@triton.dev")
+    mail.set_subject("test")
+    mail.set_html(url)
+
+    mailClient.send(mail)

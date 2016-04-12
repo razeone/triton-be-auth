@@ -10,6 +10,7 @@ class Config(object):
     DEBUG = False
     SECRET_KEY = "tritondevs"
     ENCRYPTION_ALGORITHM = 'HS256'
+    MAIL_KEY = "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"
     DEBUG = False
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
