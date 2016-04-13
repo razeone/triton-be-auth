@@ -54,6 +54,10 @@ ERRORS["user_not_found"] = {
     "error": "User not found",
     "error_code": 404
     }
+ERRORS["user_not_active"] = {
+    "error": "User not active",
+    "error_code": 404
+    }
 ERRORS["user_already_exists"] = {
     "error": "User already exists",
     "error_code": 409

@@ -59,11 +59,14 @@ def login():
 
     if user is not None:
         if check_password_hash(user.password, password):
-            login_user(user)
-            response = {"success": True}
-            response["email"] = user.email
-            response["token"] = create_token(user)
-            return jsonify(response)
+            if user.is_active == True:
+                login_user(user)
+                response = {"success": True}
+                response["email"] = user.email
+                response["token"] = create_token(user)
+                return jsonify(response)
+            else:
+                return error_response("user_not_active")
         else:
             return error_response("wrong_password")
     else:
