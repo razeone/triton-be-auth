@@ -7,6 +7,7 @@ from app.mod_auth.models import User
 from werkzeug.security import generate_password_hash
 from app.mod_auth.utils import gen_random_uuid
 from app.mod_auth.utils import send_activate_mail
+from app.mod_auth.utils import get_recover_id
 from app.mod_auth.user_schema import UserSchema
 
 
@@ -63,10 +64,25 @@ def activate_user(activation_token):
     user_instance = User.query.filter_by(activation_token=activation_token).first()
     if user_instance is not None:
         user_instance.is_active = True
-#        user_instance.confirmated_at = date.today()
         user_instance.confirmated_at = datetime.datetime.now()
 
-    db.session.add(user_instance)
-    db.session.commit()
+        db.session.add(user_instance)
+        db.session.commit()
 
-    return user_instance
+        return True, {"success": True}
+    else:
+        return False, {"error": "User not found"}
+
+def recover_password(recover_token, new_password):
+    user_id = get_recover_id(recover_token)
+    user_instance = User.query.get(user_id)
+    if user_instance is not None:
+        password = generate_password_hash(new_password)
+        user_instance.password = password
+
+        db.session.add(user_instance)
+        db.session.commit()
+
+        return True, {"success": True}
+    else:
+        return False, {"error": "User not found"}

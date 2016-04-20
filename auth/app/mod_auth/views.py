@@ -18,12 +18,14 @@ from app.mod_base.errors import error_response
 
 from app.mod_auth.utils import create_token
 from app.mod_auth.utils import jwt_required
+from app.mod_auth.utils import send_recover_mail
 
 from app.mod_auth.user import get_user_by_email
 from app.mod_auth.user import create_user
 from app.mod_auth.user import get_users
 from app.mod_auth.user import get_user
 from app.mod_auth.user import activate_user
+from app.mod_auth.user import recover_password
 
 
 auth_module = Blueprint("auth", __name__, url_prefix="/v1/auth")
@@ -90,12 +92,61 @@ def logout():
 @auth_module.route("/activate/<activate_token>", methods=["GET"])
 def activate(activate_token):
     try:
-        activate_user(activate_token)
+        response = activate_user(activate_token)
 
-        return jsonify({}), 200
+        if response[0]:
+            return jsonify(response[1]), 200
+        else:
+            return error_response("user_not_found")
     except Exception as e:
         return error_response(e)
 
+
+@auth_module.route("/recover_request", methods=["POST"])
+def recover_request():
+
+    try:
+        params = request.json
+    except Exception as e:
+        return error_response("params_required")
+    if not 'email' in params:
+        return error_response("email_missing")
+
+    email = params["email"]
+
+    user = get_user_by_email(email)
+
+    if user is not None:
+        if user.is_active == True:
+
+            recover_password(user)
+
+            response = {"success": True}
+            return jsonify(response)
+
+        else:
+            return error_response("user_not_active")
+    else:
+        return error_response("user_not_found")
+
+
+@auth_module.route("/recover", methods=["POST"])
+def recover():
+
+    try:
+        params = request.json
+    except Exception as e:
+        return error_response("params_required")
+
+    recover_token = params["token"]
+    password = params["password"]
+
+    response = recover_password(recover_token, password)
+
+    if response[0]:
+        return jsonify(response[1].data), 200
+    else:
+        return error_response("user_not_found")
 
 
 @auth_module.route("/users", methods=["GET", "POST"])
@@ -158,3 +209,4 @@ def authtest():
         "email": current_user.email
     }
     return jsonify(response), 200
+

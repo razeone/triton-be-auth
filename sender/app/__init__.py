@@ -6,12 +6,14 @@ import sendgrid
 import config
 
 from app.controllers import activate
+from app.controllers import recover
 
 
 redisClient = redis.StrictRedis(config.REDIS_HOST, config.REDIS_PORT)
 
 receiver = redisClient.pubsub()
 receiver.subscribe(activate.channel)
+receiver.subscribe(recover.channel)
 
 
 while True:
@@ -28,6 +30,9 @@ while True:
 
                 if channel == activate.channel:
                     activate.handle_message(content)
+
+                if channel == recover.channel:
+                    recover.handle_message(content)
 
             except Exception as e:
                 print(e)
