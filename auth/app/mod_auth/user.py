@@ -1,4 +1,6 @@
 import random
+import datetime
+
 from app import db
 
 from app.mod_auth.models import User
@@ -61,6 +63,8 @@ def activate_user(activation_token):
     user_instance = User.query.filter_by(activation_token=activation_token).first()
     if user_instance is not None:
         user_instance.is_active = True
+#        user_instance.confirmated_at = date.today()
+        user_instance.confirmated_at = datetime.datetime.now()
 
     db.session.add(user_instance)
     db.session.commit()

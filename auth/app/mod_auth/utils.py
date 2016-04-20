@@ -1,6 +1,7 @@
 import uuid
 import jwt
-import sendgrid
+import redis
+import json
 
 from app import app
 from flask import request
@@ -17,8 +18,8 @@ from app.mod_auth.models import User
 from app.mod_base.errors import error_response
 
 
+redisClient = redis.StrictRedis(app.config['REDIS_HOST'], app.config['REDIS_PORT'])
 
-mailClient = sendgrid.SendGridClient(app.config['MAIL_KEY'])
 
 def create_token(user):
 
@@ -82,12 +83,11 @@ def gen_random_uuid():
 
 
 def send_activate_mail(user):
-    url = "http://localhost:8085/v1/auth/activate/" + user.activation_token
 
-    mail = sendgrid.Mail()
-    mail.add_to(user.email)
-    mail.set_from("root@triton.dev")
-    mail.set_subject("test")
-    mail.set_html(url)
+    mail = user.email
+    token = user.activation_token
 
-    mailClient.send(mail)
+    message = json.dumps({"mail": mail, "token": token})
+    print(message)
+    redisClient.publish("activate", message)
+
