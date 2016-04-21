@@ -7,7 +7,7 @@ channel = "recover"
 
 subject = "Recover user password"
 user_from = "recover@triton.dev"
-recover_url = "http://" + config.HOSTNAME + "/v1/auth/recover_request/"
+recover_url = "http://" + config.HOSTNAME + "/user/#/reset/"
 
 mailClient = sendgrid.SendGridClient(config.MAIL_KEY)
 

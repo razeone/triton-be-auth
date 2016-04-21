@@ -119,7 +119,7 @@ def recover_request():
     if user is not None:
         if user.is_active == True:
 
-            recover_password(user)
+            send_recover_mail(user)
 
             response = {"success": True}
             return jsonify(response)
@@ -144,7 +144,7 @@ def recover():
     response = recover_password(recover_token, password)
 
     if response[0]:
-        return jsonify(response[1].data), 200
+        return jsonify(response[1]), 200
     else:
         return error_response("user_not_found")
 

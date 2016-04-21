@@ -94,7 +94,7 @@ def send_activate_mail(user):
 def send_recover_mail(user):
 
     mail = user.email
-    token = gen_random_uuid()
+    token = str(gen_random_uuid())
     message = json.dumps({"mail": mail, "token": token})
 
     redisClient.set(token, user.user_id)

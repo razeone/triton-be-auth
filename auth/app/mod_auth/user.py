@@ -74,15 +74,20 @@ def activate_user(activation_token):
         return False, {"error": "User not found"}
 
 def recover_password(recover_token, new_password):
-    user_id = get_recover_id(recover_token)
-    user_instance = User.query.get(user_id)
-    if user_instance is not None:
-        password = generate_password_hash(new_password)
-        user_instance.password = password
+    user_id = get_recover_id(recover_token).decode("utf-8")
+    if user_id is not None:
+        print(user_id)
+        user_instance = User.query.get(user_id)
+        if user_instance is not None:
+            password = generate_password_hash(new_password)
+            user_instance.password = password
 
-        db.session.add(user_instance)
-        db.session.commit()
+            db.session.add(user_instance)
+            db.session.commit()
 
-        return True, {"success": True}
+            return True, {"success": True}
+        else:
+            return False, {"error": "User not found"}
     else:
         return False, {"error": "User not found"}
+
