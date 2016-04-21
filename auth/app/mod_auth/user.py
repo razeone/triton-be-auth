@@ -74,9 +74,9 @@ def activate_user(activation_token):
         return False, {"error": "User not found"}
 
 def recover_password(recover_token, new_password):
-    user_id = get_recover_id(recover_token).decode("utf-8")
+    user_id = get_recover_id(recover_token)
     if user_id is not None:
-        print(user_id)
+        user_id = user_id.decode("utf-8")
         user_instance = User.query.get(user_id)
         if user_instance is not None:
             password = generate_password_hash(new_password)

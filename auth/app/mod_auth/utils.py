@@ -102,5 +102,6 @@ def send_recover_mail(user):
 
 def get_recover_id(recover_token):
     user_id = redisClient.get(recover_token)
+    redisClient.delete(recover_token)
     return user_id
 
