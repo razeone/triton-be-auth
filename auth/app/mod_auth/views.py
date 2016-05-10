@@ -162,12 +162,14 @@ def users():
             return error_response("email_missing")
         if not 'password' in params:
             return error_response("password_missing")
-        if len(params["email"]) == 0 or len(params["password"]) == 0:
+        if len(params["name"]) == 0 or len(params["lastname"]) == 0:
             return error_response("params_required")
 
         user_data = {}
         user_data["email"] = params["email"]
         user_data["password"] = params["password"]
+        user_data["name"] = params["name"]
+        user_data["lastname"] = params["lastname"]
 
         user = get_user_by_email(user_data["email"])
 

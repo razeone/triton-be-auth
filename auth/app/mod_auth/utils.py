@@ -91,6 +91,12 @@ def send_activate_mail(user):
     redisClient.publish("activate", message)
 
 
+def send_profile(name, lastname, user):
+
+    message = json.dumps({"name": name, "lastname": lastname, "user": user})
+
+    redisClient.publish("profile", message)
+
 def send_recover_mail(user):
 
     mail = user.email

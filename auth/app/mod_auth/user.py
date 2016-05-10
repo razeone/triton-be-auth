@@ -7,6 +7,7 @@ from app.mod_auth.models import User
 from werkzeug.security import generate_password_hash
 from app.mod_auth.utils import gen_random_uuid
 from app.mod_auth.utils import send_activate_mail
+from app.mod_auth.utils import send_profile
 from app.mod_auth.utils import get_recover_id
 from app.mod_auth.user_schema import UserSchema
 
@@ -27,7 +28,11 @@ def create_user(user_data):
         db.session.add(user)
         db.session.commit()
 
+        name = user_data["name"]
+        lastname = user_data["lastname"]
+
         send_activate_mail(user)
+        send_profile(name, lastname, user.email)
 
         response = {"success": True}
         response["user_id"] = user.user_id
