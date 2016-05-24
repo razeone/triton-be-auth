@@ -1,12 +1,14 @@
 import json
 
+
 ERRORS = {}
 
 # General API errors
+
 ERRORS[400] = {
     "error": "Bad request",
     "error_code": 400
-}
+    }
 ERRORS[401] = {
     "error": "Unauthorized",
     "error_code": 401
@@ -45,7 +47,6 @@ ERRORS["params_required"] = {
     "error": "Params not available",
     "error_code": 400
     }
-
 ERRORS["wrong_password"] = {
     "error": "Wrong password",
     "error_code": 400
@@ -65,11 +66,11 @@ ERRORS["user_already_exists"] = {
 ERRORS["email_missing"] = {
     "error": "Email address is missing",
     "error_code": 422
-}
+    }
 ERRORS["password_missing"] = {
     "error": "The password is missing",
     "error_code": 422
-}
+    }
 ERRORS["user_not_created"] = {
     "error": "Error creating user",
     "error_code": 500

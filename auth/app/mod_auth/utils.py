@@ -1,24 +1,24 @@
-import uuid
-import jwt
-import redis
 import json
-
-from app import app
-from flask import request
-from flask import g
-
-from jwt import DecodeError
-from jwt import ExpiredSignature
-
+import jwt
+import random
 from functools import wraps
 from datetime import datetime
 from datetime import timedelta
 
-from app.mod_auth.models import User
+from flask import request
+from flask import g
+from jwt import DecodeError
+from jwt import ExpiredSignature
+
+from app import app
 from app.mod_base.errors import error_response
+from app.mod_base.utils import send_message
+from app.mod_auth.user import get_user_by_email
+from app.mod_auth.user import save_user
 
 
-redisClient = redis.StrictRedis(app.config['REDIS_HOST'], app.config['REDIS_PORT'])
+secretKey = app.config['SECRET_KEY']
+encryption = app.config['ENCRYPTION_ALGORITHM']
 
 
 def create_token(user):
@@ -29,22 +29,14 @@ def create_token(user):
         "exp": datetime.utcnow() + timedelta(days=1)
     }
 
-    token = jwt.encode(
-        payload,
-        app.config['SECRET_KEY'],
-        algorithm=app.config['ENCRYPTION_ALGORITHM']
-        )
+    token = jwt.encode(payload, secretKey, algorithm=encryption)
     return token.decode('unicode_escape')
 
 
 def parse_token(req):
 
     token = req.headers.get('Authorization').split()[1]
-    return jwt.decode(
-        token,
-        app.config['SECRET_KEY'],
-        algorithms=app.config['ENCRYPTION_ALGORITHM']
-        )
+    return jwt.decode(token, secretKey, algorithms=encryption)
 
 
 def jwt_required(f):
@@ -56,30 +48,24 @@ def jwt_required(f):
             return error_response("token_required")
 
         try:
-
             payload = parse_token(request)
 
             email = payload['sub']
-            user = User.query.filter_by(email=email).first()
+            user = get_user_by_email(email)
 
             if user is None:
                 return error_response("user_not_found")
 
+            g.user = user
+
         except DecodeError:
             return error_response("token_invalid")
-
         except ExpiredSignature:
             return error_response("token_expired")
-
-        g.user = user
 
         return f(*args, **kwargs)
 
     return decorated_function
-
-
-def gen_random_uuid():
-    return uuid.uuid4()
 
 
 def send_activate_mail(user):
@@ -87,27 +73,25 @@ def send_activate_mail(user):
     mail = user.email
     token = user.activation_token
     message = json.dumps({"mail": mail, "token": token})
+    send_message("activate", message)
 
-    redisClient.publish("activate", message)
-
-
-def send_profile(name, lastname, user):
-
-    message = json.dumps({"name": name, "lastname": lastname, "user": user})
-
-    redisClient.publish("profile", message)
 
 def send_recover_mail(user):
 
+    token = str(random.getrandbits(128))
+    user.activation_token = token
+    save_user(user)
+
     mail = user.email
-    token = str(gen_random_uuid())
     message = json.dumps({"mail": mail, "token": token})
+    send_message("recover", message)
 
-    redisClient.set(token, user.user_id)
-    redisClient.publish("recover", message)
 
-def get_recover_id(recover_token):
-    user_id = redisClient.get(recover_token)
-    redisClient.delete(recover_token)
-    return user_id
+def send_profile(user):
 
+    name = user['name']
+    lastname = user['lastname']
+    mail = user['email']
+
+    message = json.dumps({"name": name, "lastname": lastname, "user": mail})
+    send_message("profile", message)

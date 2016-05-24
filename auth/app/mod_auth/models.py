@@ -1,7 +1,9 @@
-from app import db
+from datetime import datetime
+
 from sqlalchemy_utils import UUIDType
 from flask.ext.login import UserMixin
-import datetime
+
+from app import db
 
 
 class User(UserMixin, db.Model):
@@ -11,9 +13,9 @@ class User(UserMixin, db.Model):
     user_id = db.Column(UUIDType, unique=True, primary_key=True)
     email = db.Column(db.String(128), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=False)
-    activation_token = db.Column(db.String(128), unique=True)
     is_admin = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    activation_token = db.Column(db.String(128), unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     confirmated_at = db.Column(db.DateTime)
     password = db.Column(db.String(192), nullable=False)
 

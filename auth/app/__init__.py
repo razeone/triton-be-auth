@@ -1,18 +1,18 @@
+import os
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-from app.mod_base.access import set_cors
-from app.mod_base.access import set_errors
+from app.mod_base.access import configure_access
 
-import os
+
+buildmode = os.environ['APP_SETTINGS']
 
 app = Flask(__name__)
-app.config.from_object(os.environ['APP_SETTINGS'])
-print("Loading configuraton from: " + os.environ['APP_SETTINGS'])
+app.config.from_object(buildmode)
+print("Loading configuraton from: " + buildmode)
 
-set_cors(app)
-set_errors(app)
-
+configure_access(app)
 db = SQLAlchemy(app)
 
 from app.mod_auth.views import auth_module

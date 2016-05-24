@@ -1,26 +1,25 @@
+import uuid
 import random
-import datetime
+from datetime import datetime
+
+from werkzeug.security import generate_password_hash
 
 from app import db
-
 from app.mod_auth.models import User
-from werkzeug.security import generate_password_hash
-from app.mod_auth.utils import gen_random_uuid
-from app.mod_auth.utils import send_activate_mail
-from app.mod_auth.utils import send_profile
-from app.mod_auth.utils import get_recover_id
-from app.mod_auth.user_schema import UserSchema
+from app.mod_auth.schemas import UserSchema
 
 
 def create_user(user_data):
+
     try:
+        user_id = uuid.uuid4()
+        email = user_data['email']
         password = generate_password_hash(user_data["password"])
-        user_id = gen_random_uuid()
         activation_token = str(random.getrandbits(128))
 
         user = User(
             user_id=user_id,
-            email=user_data["email"],
+            email=email,
             password=password,
             activation_token=activation_token
             )
@@ -28,71 +27,91 @@ def create_user(user_data):
         db.session.add(user)
         db.session.commit()
 
-        name = user_data["name"]
-        lastname = user_data["lastname"]
+        return user
 
-        send_activate_mail(user)
-        send_profile(name, lastname, user.email)
-
-        response = {"success": True}
-        response["user_id"] = user.user_id
-        response["email"] = user.email
-        return response
     except Exception as e:
-        print(e)
-        return False, {"error": "Error creating user"}
+        return None
 
 
-def get_user(user_id):
+def save_user(user):
+    db.session.add(user)
+    db.session.commit()
+
+
+def get_user_by_id(id):
+
     try:
-        user_instance = User.query.get(user_id)
-        user_schema = UserSchema()
-        result = user_schema.dump(user_instance)
-        return True, result
+        user_id = uuid.UUID(id).hex
     except Exception as e:
-        return False, {"error": "User not found"}
+        return None
+
+    user_instance = User.query.get(user_id)
+    return user_instance
 
 
 def get_user_by_email(email):
+
     user_instance = User.query.filter_by(email=email).first()
     return user_instance
 
 
-def get_users():
+def get_user_by_token(token):
+
+    user_instance = User.query.filter_by(activation_token=token).first()
+    return user_instance
+
+
+def get_user_data(user_instance):
+
+    if user_instance is None:
+        return None
+
+    try:
+        user_schema = UserSchema()
+        result = user_schema.dump(user_instance)
+        return result.data
+    except Exception as e:
+        return None
+
+
+def get_users_data():
     users = User.query.all()
     users_schema = UserSchema(many=True)
     result = users_schema.dump(users)
-    return result
+    return result.data
+
+
+def exists_user(user_data):
+
+    email = user_data['email']
+    user = get_user_by_email(email)
+    return user is not None
 
 
 def activate_user(activation_token):
-    user_instance = User.query.filter_by(activation_token=activation_token).first()
-    if user_instance is not None:
-        user_instance.is_active = True
-        user_instance.confirmated_at = datetime.datetime.now()
 
-        db.session.add(user_instance)
-        db.session.commit()
+    user = get_user_by_token(activation_token)
 
-        return True, {"success": True}
-    else:
-        return False, {"error": "User not found"}
+    if user is None:
+        return False
+
+    user.is_active = True
+    user.activation_token = None
+    user.confirmated_at = datetime.now()
+    save_user(user)
+
+    return True
+
 
 def recover_password(recover_token, new_password):
-    user_id = get_recover_id(recover_token)
-    if user_id is not None:
-        user_id = user_id.decode("utf-8")
-        user_instance = User.query.get(user_id)
-        if user_instance is not None:
-            password = generate_password_hash(new_password)
-            user_instance.password = password
 
-            db.session.add(user_instance)
-            db.session.commit()
+    user = get_user_by_token(recover_token)
 
-            return True, {"success": True}
-        else:
-            return False, {"error": "User not found"}
-    else:
-        return False, {"error": "User not found"}
+    if user is None:
+        return False
 
+    user.password = generate_password_hash(new_password)
+    user.activation_token = None
+    save_user(user)
+
+    return True
