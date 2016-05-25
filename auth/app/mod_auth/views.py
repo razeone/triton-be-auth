@@ -1,3 +1,7 @@
+import requests
+import json
+from urllib.parse import parse_qsl
+
 from flask import Blueprint
 from flask import request
 from flask import jsonify
@@ -12,9 +16,11 @@ from app import app
 from app.mod_base.errors import error_response
 from app.mod_auth.user import get_user_by_id
 from app.mod_auth.user import get_user_by_email
+from app.mod_auth.user import get_user_by_social_id
 from app.mod_auth.user import get_user_data
 from app.mod_auth.user import get_users_data
 from app.mod_auth.user import create_user
+from app.mod_auth.user import create_social_user
 from app.mod_auth.user import exists_user
 from app.mod_auth.user import activate_user
 from app.mod_auth.user import recover_password
@@ -123,7 +129,7 @@ def create_user_ep():
 
 
 @auth_module.route("/users", methods=["GET"])
-#@login_required
+@jwt_required
 def get_users_ep():
 
     users = get_users_data()
@@ -135,7 +141,7 @@ def get_users_ep():
 
 
 @auth_module.route("/users/<user_id>", methods=["GET"])
-#@login_required
+@login_required
 def get_user_ep(user_id):
 
     user_instance = get_user_by_id(user_id)
@@ -217,4 +223,164 @@ def recover_password_ep():
         return error_response("user_not_found")
 
     response = {}
+    return jsonify(response), 200
+
+
+@auth_module.route("/facebook", methods=["POST"])
+def login_facebook_ep():
+
+    try:
+        params = request.json
+    except Exception as e:
+        return error_response("params_required")
+
+    access_token_url = 'https://graph.facebook.com/v2.6/oauth/access_token'
+    graph_api_url = 'https://graph.facebook.com/v2.6/me?fields=id,first_name,last_name,email'
+
+    social_network = "facebook"
+    clientId = params['clientId']
+    clientSecret = app.config['FACEBOOK_SECRET']
+    redirectUri = params['redirectUri']
+    code = params['code']
+
+    params = {
+        "client_id": clientId,
+        "client_secret": clientSecret,
+        "redirect_uri": redirectUri,
+        "code": code
+    }
+
+    r = requests.get(access_token_url, params)
+    access_token = json.loads(r.text)
+
+    r = requests.get(graph_api_url, access_token)
+    profile = json.loads(r.text)
+
+    social_id = profile['id']
+
+    print(profile)
+
+    email = ""
+    if 'email' in profile:
+        email = profile['email']
+
+    name = profile['first_name']
+    lastname = profile['last_name']
+
+    return login_social_ep(social_id, social_network, email, name, lastname)
+
+
+@auth_module.route("/google", methods=["POST"])
+def login_google_ep():
+
+    try:
+        params = request.json
+    except Exception as e:
+        return error_response("params_required")
+
+    access_token_url = 'https://accounts.google.com/o/oauth2/token'
+    people_api_url = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
+
+    social_network = "google"
+    clientId = params['clientId']
+    clientSecret = app.config['GOOGLE_SECRET']
+    redirectUri = params['redirectUri']
+    code = params['code']
+
+    params = dict(
+        client_id=clientId,
+        client_secret=clientSecret,
+        redirect_uri=redirectUri,
+        code=code,
+        grant_type='authorization_code'
+        )
+
+    r = requests.post(access_token_url, data=params)
+    access_token = json.loads(r.text)
+    token = access_token['access_token']
+    headers = {'Authorization': 'Bearer {0}'.format(token)}
+
+    r = requests.get(people_api_url, headers=headers)
+    profile = json.loads(r.text)
+
+    social_id = profile['sub']
+
+    email = ""
+    if 'email' in profile:
+        email = profile['email']
+
+    name = profile['given_name']
+    lastname = profile['family_name']
+
+    return login_social_ep(social_id, social_network, email, name, lastname)
+
+
+@auth_module.route("/github", methods=["POST"])
+def login_github_ep():
+
+    try:
+        params = request.json
+    except Exception as e:
+        return error_response("params_required")
+
+    access_token_url = 'https://github.com/login/oauth/access_token'
+    users_api_url = 'https://api.github.com/user'
+
+    social_network = "github"
+    clientId = params['clientId']
+    clientSecret = app.config['GITHUB_SECRET']
+    code = params['code']
+    redirectUri = params['redirectUri']
+
+    params = {
+        "client_id": clientId,
+        "client_secret": clientSecret,
+        "redirect_uri": redirectUri,
+        "code": code
+    }
+
+    r = requests.get(access_token_url, params)
+    access_token = dict(parse_qsl(r.text))
+
+    r = requests.get(users_api_url, access_token)
+    profile = json.loads(r.text)
+
+    print(profile)
+
+    social_id = profile['id']
+
+    email = ""
+    if 'email' in profile:
+        email = profile['email']
+
+    name = profile['name']
+    lastname = ""
+
+    return login_social_ep(social_id, social_network, email, name, lastname)
+
+
+def login_social_ep(social_id, social_network, email, name, lastname):
+
+    user_data = {}
+    user_data['social_id'] = social_id
+    user_data['social_network'] = social_network
+    user_data['email'] = email
+    user_data['name'] = name
+    user_data['lastname'] = lastname
+
+    user = get_user_by_social_id(social_id, social_network)
+
+    if user is None:
+        user = create_social_user(user_data)
+
+        if user is None:
+            return error_response("user_not_created")
+
+        send_profile(user_data)
+
+    login_user(user)
+
+    response = {
+        "token": create_token(user)
+    }
     return jsonify(response), 200

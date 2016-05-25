@@ -14,6 +14,7 @@ from app import app
 from app.mod_base.errors import error_response
 from app.mod_base.utils import send_message
 from app.mod_auth.user import get_user_by_email
+from app.mod_auth.user import get_user_by_social_id
 from app.mod_auth.user import save_user
 
 
@@ -23,8 +24,16 @@ encryption = app.config['ENCRYPTION_ALGORITHM']
 
 def create_token(user):
 
+    if user.social_network is None:
+        id = user.email
+        network = "email"
+    else:
+        id = user.social_id
+        network = user.social_network
+
     payload = {
-        "sub": user.email,
+        "sub": id,
+        "iss": network,
         "iat": datetime.utcnow(),
         "exp": datetime.utcnow() + timedelta(days=1)
     }
@@ -50,17 +59,22 @@ def jwt_required(f):
         try:
             payload = parse_token(request)
 
-            email = payload['sub']
-            user = get_user_by_email(email)
+            id = payload['sub']
+            network = payload['iss']
+
+            if network == "email":
+                user = get_user_by_email(email)
+            else:
+                user = get_user_by_social_id(id, network)
 
             if user is None:
                 return error_response("user_not_found")
 
             g.user = user
 
-        except DecodeError:
+        except DecodeError as de:
             return error_response("token_invalid")
-        except ExpiredSignature:
+        except ExpiredSignature as es:
             return error_response("token_expired")
 
         return f(*args, **kwargs)

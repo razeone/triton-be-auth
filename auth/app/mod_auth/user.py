@@ -33,6 +33,30 @@ def create_user(user_data):
         return None
 
 
+def create_social_user(user_data):
+
+    try:
+        user_id = uuid.uuid4()
+        social_id = user_data['social_id']
+        social_network = user_data['social_network']
+        email = user_data['email']
+
+        user = User(
+            user_id=user_id,
+            social_id=social_id,
+            social_network=social_network,
+            email=email
+            )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return user
+
+    except Exception as e:
+        return None
+
+
 def save_user(user):
     db.session.add(user)
     db.session.commit()
@@ -52,6 +76,12 @@ def get_user_by_id(id):
 def get_user_by_email(email):
 
     user_instance = User.query.filter_by(email=email).first()
+    return user_instance
+
+
+def get_user_by_social_id(social_id, social_network):
+
+    user_instance = User.query.filter_by(social_id=social_id, social_network=social_network).first()
     return user_instance
 
 
@@ -97,7 +127,7 @@ def activate_user(activation_token):
 
     user.is_active = True
     user.activation_token = None
-    user.confirmated_at = datetime.now()
+    user.confirmated_at = datetime.utcnow()
     save_user(user)
 
     return True
