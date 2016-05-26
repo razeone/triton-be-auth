@@ -110,6 +110,7 @@ def create_user_ep():
     user_data['password'] = params['password']
     user_data['name'] = params['name']
     user_data['lastname'] = params['lastname']
+    user_data['user'] = params['email']
 
     if exists_user(user_data):
         return error_response("user_already_exists")
@@ -367,6 +368,7 @@ def login_social_ep(social_id, social_network, email, name, lastname):
     user_data['email'] = email
     user_data['name'] = name
     user_data['lastname'] = lastname
+    user_data['user'] = social_network + ":" + social_id
 
     user = get_user_by_social_id(social_id, social_network)
 

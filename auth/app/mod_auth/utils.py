@@ -105,7 +105,8 @@ def send_profile(user):
 
     name = user['name']
     lastname = user['lastname']
-    mail = user['email']
+    email = user['email']
+    user = user['user']
 
-    message = json.dumps({"name": name, "lastname": lastname, "user": mail})
+    message = json.dumps({"name": name, "lastname": lastname, "email": email, "user": user})
     send_message("profile", message)
