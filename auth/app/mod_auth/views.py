@@ -1,6 +1,7 @@
 import requests
 import json
 from urllib.parse import parse_qsl
+from requests_oauthlib import OAuth1
 
 from flask import Blueprint
 from flask import request
@@ -259,8 +260,6 @@ def login_facebook_ep():
 
     social_id = profile['id']
 
-    print(profile)
-
     email = ""
     if 'email' in profile:
         email = profile['email']
@@ -269,6 +268,61 @@ def login_facebook_ep():
     lastname = profile['last_name']
 
     return login_social_ep(social_id, social_network, email, name, lastname)
+
+
+@auth_module.route("/twitter", methods=["POST"])
+def login_twitter_ep():
+
+    try:
+        params = request.json
+    except Exception as e:
+        return error_response("params_required")
+
+    request_token_url = 'https://api.twitter.com/oauth/request_token'
+    access_token_url = 'https://api.twitter.com/oauth/access_token'
+
+    social_network = "twitter"
+    clientId = app.config['TWITTER_KEY']
+    clientSecret = app.config['TWITTER_SECRET']
+
+    if params.get('oauth_token') and params.get('oauth_verifier'):
+
+        oauthToken = params['oauth_token']
+        oauthVerifier = params['oauth_verifier']
+        auth = OAuth1(
+            clientId,
+            client_secret=clientSecret,
+            resource_owner_key=oauthToken,
+            verifier=oauthVerifier
+            )
+
+        r = requests.post(access_token_url, auth=auth)
+        profile = dict(parse_qsl(r.text))
+
+        social_id = profile['user_id']
+
+        email = ""
+        if 'email' in profile:
+            email = profile['email']
+
+        name = profile['screen_name']
+        lastname = ""
+
+        return login_social_ep(social_id, social_network, email, name, lastname)
+
+    else:
+
+        redirectUri = params['redirectUri']
+        auth = OAuth1(
+            clientId,
+            client_secret=clientSecret,
+            callback_uri=redirectUri
+            )
+
+        r = requests.post(request_token_url, auth=auth)
+        oauth_token = dict(parse_qsl(r.text))
+
+        return jsonify(oauth_token)
 
 
 @auth_module.route("/google", methods=["POST"])
@@ -346,8 +400,6 @@ def login_github_ep():
     r = requests.get(users_api_url, access_token)
     profile = json.loads(r.text)
 
-    print(profile)
-
     social_id = profile['id']
 
     email = ""
@@ -368,7 +420,7 @@ def login_social_ep(social_id, social_network, email, name, lastname):
     user_data['email'] = email
     user_data['name'] = name
     user_data['lastname'] = lastname
-    user_data['user'] = social_network + ":" + social_id
+    user_data['user'] = social_network + ":" + str(social_id)
 
     user = get_user_by_social_id(social_id, social_network)
 
