@@ -96,7 +96,8 @@ def create_user_ep():
         params = request.json
     except Exception as e:
         return error_response("params_required")
-
+    if params is None:
+        return error_response("params_required")
     if not 'email' in params:
         return error_response("email_missing")
     if not 'password' in params:
